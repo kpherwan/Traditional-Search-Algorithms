@@ -1,19 +1,28 @@
-package com.homework;
+package work;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-class Coordinate {
+class Coordinate implements Comparable<Coordinate> {
     int x;
     int y;
     Coordinate parent;
+    int priority;
 
     Coordinate(int x, int y, Coordinate parent) {
         this.x = x;
         this.y = y;
         this.parent = parent;
+        this.priority = 0;
+    }
+
+    Coordinate(int x, int y, Coordinate parent, int priority) {
+        this.x = x;
+        this.y = y;
+        this.parent = parent;
+        this.priority = priority;
     }
 
     public String toString(){
@@ -21,16 +30,14 @@ class Coordinate {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Coordinate that = (Coordinate) o;
-        return x == that.x && y == that.y;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(x, y);
+    public int compareTo(Coordinate o) {
+        if(this.priority > o.priority) {
+            return 1;
+        } else if (this.priority < o.priority) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 }
 
@@ -43,7 +50,7 @@ public class homework {
     public static void main(String[] args) {
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("src/com/homework/input4.txt"));
+            scanner = new Scanner(new File("src/work/input6.txt"));
             //scanner = new Scanner(new File("input.txt"));
             String typeOfAlgorithm = scanner.nextLine();
 
@@ -94,8 +101,8 @@ public class homework {
     private static void solveUsingBFS(int columnWidth, int rowHeight, Coordinate startingCoord, int maxRockHeight,
                                       int noOfSites, Map<String, Coordinate> allSitesPaths, int[][] matrix) {
         Queue<Coordinate> queue = new LinkedList<>();
-        boolean visited[][] = new boolean[rowHeight][columnWidth];
-        visited[startingCoord.y][startingCoord.x] = true;
+        boolean closed[][] = new boolean[rowHeight][columnWidth];
+        closed[startingCoord.y][startingCoord.x] = true;
         queue.add(startingCoord);
 
         int noOfPendingSites = noOfSites;
@@ -103,23 +110,84 @@ public class homework {
         while(!queue.isEmpty() && noOfPendingSites  != 0) {
             Coordinate currentCoord = queue.peek();
             if(allSitesPaths.get(currentCoord.toString()) != null) {
-                System.out.println("reached " + currentCoord.toString());
                 noOfPendingSites--;
                 allSitesPaths.put(currentCoord.toString(), currentCoord);
             }
 
             queue.poll();
 
-            List<Coordinate> allNeighbors = getAllUnvisitedNeighboursBFS(matrix, currentCoord, columnWidth, rowHeight, maxRockHeight, visited);
+            List<Coordinate> allNeighbors = getAllUnclosedNeighboursBFS(matrix, currentCoord, columnWidth, rowHeight, maxRockHeight, closed);
             if (!allNeighbors.isEmpty()) {
                 queue.addAll(allNeighbors);
             }
-            System.out.println("QUEUE " + queue.toString());
         }
 
         printAllSitesPaths(allSitesPaths);
+    }
 
-        System.out.println("BFS implementation done");
+
+
+    private static List<Coordinate> getAllUnclosedNeighboursBFS(int[][] matrix, Coordinate currentCoord, int columnWidth, int rowHeight,
+                                                                 int maxRockHeight, boolean[][] closed) {
+        int currentHeight = matrix[currentCoord.y][currentCoord.x] < 0 ? Math.abs(matrix[currentCoord.y][currentCoord.x]) : 0;
+        List<Coordinate> neighbours = new ArrayList<>();
+
+        for(int y = Math.max(0, currentCoord.y-1); y <= Math.min(currentCoord.y+1, rowHeight-1); y++){
+                for(int x = Math.max(0, currentCoord.x-1); x <= Math.min(currentCoord.x+1, columnWidth-1); x++){
+                    Coordinate neighbour = new Coordinate(x,y, currentCoord);
+                    if((neighbour.x != currentCoord.x || neighbour.y != currentCoord.y) && !closed[y][x]){
+                        int height = matrix[y][x] < 0 ? Math.abs(matrix[y][x]) : 0;
+                        if (Math.abs(currentHeight - height) <= maxRockHeight) {
+                            neighbours.add(neighbour);
+                            closed[neighbour.y][neighbour.x] = true;
+                    }
+                }
+            }
+        }
+        return neighbours;
+    }
+
+    private static void solveUsingUCS(int columnWidth, int rowHeight, Coordinate startingCoord, int maxRockHeight,
+                                      int noOfSites, Map<String, Coordinate> allSitesPaths, int[][] matrix) {
+        PriorityQueue<Coordinate> ucsQueue = new PriorityQueue<>();
+        boolean closed[][] = new boolean[rowHeight][columnWidth];
+        closed[startingCoord.y][startingCoord.x] = true;
+        ucsQueue.add(startingCoord);
+        int distance = 0;
+
+        int noOfPendingSites = noOfSites;
+
+        while(!ucsQueue.isEmpty() && noOfPendingSites  != 0) {
+            Coordinate currentCoord = ucsQueue.peek();
+            if(allSitesPaths.get(currentCoord.toString()) != null) {
+                noOfPendingSites--;
+                allSitesPaths.put(currentCoord.toString(), currentCoord);
+            }
+
+            ucsQueue.poll();
+            int currentHeight = matrix[currentCoord.y][currentCoord.x] < 0 ? Math.abs(matrix[currentCoord.y][currentCoord.x]) : 0;
+
+            for(int y = Math.max(0, currentCoord.y-1); y <= Math.min(currentCoord.y+1, rowHeight-1); y++){
+                for(int x = Math.max(0, currentCoord.x-1); x <= Math.min(currentCoord.x+1, columnWidth-1); x++){
+                    if((x != currentCoord.x || y != currentCoord.y) && !closed[y][x]){
+                        int height = matrix[y][x] < 0 ? Math.abs(matrix[y][x]) : 0;
+                        if (Math.abs(currentHeight - height) <= maxRockHeight) {
+                            distance = (x != currentCoord.x && y != currentCoord.y) ? 14 : 10;
+                            Coordinate neighbour = new Coordinate(x,y, currentCoord, currentCoord.priority + distance);
+                            ucsQueue.add(neighbour);
+                            closed[neighbour.y][neighbour.x] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        printAllSitesPaths(allSitesPaths);
+    }
+
+    private static void solveUsingAStar(int columnWidth, int rowHeight, Coordinate startingCoord, int maxRockHeight,
+                                      int noOfSites, Map<String, Coordinate> allSitesPaths, int matrix[][]) {
+        System.out.println("A* to be implemented");
     }
 
     private static void printAllSitesPaths(Map<String, Coordinate> allSitesPaths) {
@@ -145,35 +213,5 @@ public class homework {
         catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private static List<Coordinate> getAllUnvisitedNeighboursBFS(int[][] matrix, Coordinate currentCoord, int columnWidth, int rowHeight,
-                                                                 int maxRockHeight, boolean[][] visited) {
-        int currentHeight = matrix[currentCoord.y][currentCoord.x] < 0 ? Math.abs(matrix[currentCoord.y][currentCoord.x]) : 0;
-        List<Coordinate> neighbours = new ArrayList<>();
-
-        for(int y = Math.max(0, currentCoord.y-1); y <= Math.min(currentCoord.y+1, rowHeight-1); y++){
-                for(int x = Math.max(0, currentCoord.x-1); x <= Math.min(currentCoord.x+1, columnWidth-1); x++){
-                    Coordinate neighbour = new Coordinate(x,y, currentCoord);
-                    if((neighbour.x != currentCoord.x || neighbour.y != currentCoord.y) && !visited[y][x]){
-                        int height = matrix[y][x] < 0 ? Math.abs(matrix[y][x]) : 0;
-                        if (Math.abs(currentHeight - height) <= maxRockHeight) {
-                            neighbours.add(neighbour);
-                            visited[neighbour.y][neighbour.x] = true;
-                    }
-                }
-            }
-        }
-        return neighbours;
-    }
-
-    private static void solveUsingUCS(int columnWidth, int rowHeight, Coordinate startingCoord, int maxRockHeight,
-                                      int noOfSites, Map<String, Coordinate> allSitesPaths, int matrix[][]) {
-        System.out.println("UCS to be implemented");
-    }
-
-    private static void solveUsingAStar(int columnWidth, int rowHeight, Coordinate startingCoord, int maxRockHeight,
-                                      int noOfSites, Map<String, Coordinate> allSitesPaths, int matrix[][]) {
-        System.out.println("A* to be implemented");
     }
 }
