@@ -74,7 +74,7 @@ public class homework {
     public static void main(String[] args) {
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("src/work/input9.txt"));
+            scanner = new Scanner(new File("src/work/input7.txt"));
             //scanner = new Scanner(new File("input.txt"));
             String typeOfAlgorithm = scanner.nextLine();
 
@@ -139,14 +139,12 @@ public class homework {
 
             if (allDestinations.get(currentCoord.toString()) != null) {
                 allDestinations.put(currentCoord.toString(), currentCoord);
-            } else {
-
-                List<Node> allNeighbors = getAllUnvisitedNeighboursBFS(grid, currentCoord, columnWidth, rowHeight, maxRockHeight, visited);
-                if (!allNeighbors.isEmpty()) {
-                    queue.addAll(allNeighbors);
-                }
-                //System.out.println("queue contents: " + queue);
             }
+            List<Node> allNeighbors = getAllUnvisitedNeighboursBFS(grid, currentCoord, columnWidth, rowHeight, maxRockHeight, visited);
+            if (!allNeighbors.isEmpty()) {
+                queue.addAll(allNeighbors);
+            }
+            //System.out.println("queue contents: " + queue);
         }
         addToOutputFile(allDestinations);
     }
@@ -188,33 +186,35 @@ public class homework {
             if (allSitesPaths.get(currentNode.toString()) != null) {
                 System.out.println("Goal reached " + currentNode.toString());
                 allSitesPaths.put(currentNode.toString(), currentNode);
-            } else {
-                int currentHeight = grid[currentNode.y][currentNode.x] < 0 ? Math.abs(grid[currentNode.y][currentNode.x]) : 0;
+            }
+            int currentHeight = grid[currentNode.y][currentNode.x] < 0 ? Math.abs(grid[currentNode.y][currentNode.x]) : 0;
 
-                for (int y = Math.max(0, currentNode.y - 1); y <= Math.min(currentNode.y + 1, rowHeight - 1); y++) {
-                    for (int x = Math.max(0, currentNode.x - 1); x <= Math.min(currentNode.x + 1, columnWidth - 1); x++) {
-                        //not the same node as current
-                        if (x != currentNode.x || y != currentNode.y) {
-                            int height = grid[y][x] < 0 ? Math.abs(grid[y][x]) : 0;
-                            if (Math.abs(currentHeight - height) <= maxRockHeight) {
-                                distance = (x != currentNode.x && y != currentNode.y) ? 14 : 10;
-                                Node child = new Node(x, y, currentNode, currentNode.pathCost + distance);
-                                //add node to queue if node has not been explored
-                                if (!closed.contains(child) && !ucsOpenQueue.contains(child)) {
-                                    ucsOpenQueue.add(child);
-                                    costMap.put(child.toString(), child.pathCost);
-                                }
-                                //current path is shorter than previous path found
-                                else if (ucsOpenQueue.contains(child) && child.pathCost < costMap.get(child.toString())) {
-                                    ucsOpenQueue.remove(child);
-                                    ucsOpenQueue.add(child);
-                                    costMap.put(child.toString(), child.pathCost);
-                                } else if (closed.contains(child) && child.pathCost < costMap.get(child.toString())) {
-                                    closed.remove(child);
-                                    ucsOpenQueue.add(child);
-                                    costMap.put(child.toString(), child.pathCost);
-                                }
+            for (int y = Math.max(0, currentNode.y - 1); y <= Math.min(currentNode.y + 1, rowHeight - 1); y++) {
+                for (int x = Math.max(0, currentNode.x - 1); x <= Math.min(currentNode.x + 1, columnWidth - 1); x++) {
+                    //not the same node as current
+                    if (x != currentNode.x || y != currentNode.y) {
+                        int height = grid[y][x] < 0 ? Math.abs(grid[y][x]) : 0;
+                        if (Math.abs(currentHeight - height) <= maxRockHeight) {
+                            distance = (x != currentNode.x && y != currentNode.y) ? 14 : 10;
+                            Node child = new Node(x, y, currentNode, currentNode.pathCost + distance);
+                            //add node to queue if node has not been explored
+                            if (!closed.contains(child) && !ucsOpenQueue.contains(child)) {
+                                ucsOpenQueue.add(child);
+                                costMap.put(child.toString(), child.pathCost);
                             }
+                            //current path is shorter than previous path found
+                            //add logger
+                            else if (ucsOpenQueue.contains(child) && child.pathCost < costMap.get(child.toString())) {
+                                System.out.println("better path1");
+                                ucsOpenQueue.remove(child);
+                                ucsOpenQueue.add(child);
+                                costMap.put(child.toString(), child.pathCost);
+                            } /*else if (closed.contains(child) && child.pathCost < costMap.get(child.toString())) {
+                                System.out.println("better path2");
+                                closed.remove(child);
+                                ucsOpenQueue.add(child);
+                                costMap.put(child.toString(), child.pathCost);
+                            }*/
                         }
                     }
                 }
@@ -241,51 +241,50 @@ public class homework {
                 System.out.println("Goal reached " + currentNode.toString());
                 return currentNode;
             }
-            else {
-                int currentHeight = grid[currentNode.y][currentNode.x] < 0 ? Math.abs(grid[currentNode.y][currentNode.x]) : 0;
+            int currentHeight = grid[currentNode.y][currentNode.x] < 0 ? Math.abs(grid[currentNode.y][currentNode.x]) : 0;
 
-                for (int y = Math.max(0, currentNode.y - 1); y <= Math.min(currentNode.y + 1, rowHeight - 1); y++) {
-                    for (int x = Math.max(0, currentNode.x - 1); x <= Math.min(currentNode.x + 1, columnWidth - 1); x++) {
-                        //not the same node as current
-                        if (x != currentNode.x || y != currentNode.y) {
-                            int neighbourHeight = grid[y][x] < 0 ? Math.abs(grid[y][x]) : 0;
-                            if (Math.abs(currentHeight - neighbourHeight) <= maxRockHeight) {
-                                // movement cost based on diagonal or not
-                                gCost = (x != currentNode.x && y != currentNode.y) ? 14 : 10;
+            for (int y = Math.max(0, currentNode.y - 1); y <= Math.min(currentNode.y + 1, rowHeight - 1); y++) {
+                for (int x = Math.max(0, currentNode.x - 1); x <= Math.min(currentNode.x + 1, columnWidth - 1); x++) {
+                    //not the same node as current
+                    if (x != currentNode.x || y != currentNode.y) {
+                        int neighbourHeight = grid[y][x] < 0 ? Math.abs(grid[y][x]) : 0;
+                        if (Math.abs(currentHeight - neighbourHeight) <= maxRockHeight) {
+                            System.out.println("current node " + currentNode + " and cost " + currentNode.pathCost + " gcost "  + currentNode.gCost);
 
-                                //muddiness cost
-                                gCost += (grid[y][x] > 0 ? Math.abs(grid[y][x]) : 0);
+                            // movement cost based on diagonal or not
+                            gCost = (x != currentNode.x && y != currentNode.y) ? 14 : 10;
 
-                                //height cost
-                                gCost += Math.abs(currentHeight - neighbourHeight);
+                            //muddiness cost
+                            gCost += (grid[y][x] > 0 ? Math.abs(grid[y][x]) : 0);
 
-                                //distance till parent
-                                gCost += currentNode.gCost;
+                            //height cost
+                            gCost += Math.abs(currentHeight - neighbourHeight);
 
-                                //heuristic cost - diagonal distance
-                                hCost = Math.max(Math.abs(x - goal.x), Math.abs(y - goal.y));
+                            //distance till parent
+                            gCost += currentNode.gCost;
 
-                                distance = gCost + hCost;
-                                Node child = new Node(x, y, currentNode, gCost, hCost);
+                            //heuristic cost - diagonal distance
+                            hCost = Math.max(Math.abs(x - goal.x), Math.abs(y - goal.y));
+                            distance = gCost + hCost;
+                            Node child = new Node(x, y, currentNode, gCost, hCost);
 
-                                //add node to queue if node has not been explored
-                                if (!closed.contains(child) && !aStarOpenQueue.contains(child)) {
-                                    aStarOpenQueue.add(child);
-                                    costMap.put(child.toString(), distance);
-                                }
-                                //current path is shorter than previous path found
-                                else if (aStarOpenQueue.contains(child) && distance < costMap.get(child.toString())) {
-                                    System.out.println("Replacing cost as better found");
-                                    aStarOpenQueue.remove(child);
-                                    aStarOpenQueue.add(child);
-                                    costMap.put(child.toString(), child.pathCost);
-                                } else if (closed.contains(child) && distance < costMap.get(child.toString())) {
-                                    System.out.println("Replacing cost as better found");
-                                    closed.remove(child);
-                                    aStarOpenQueue.add(child);
-                                    costMap.put(child.toString(), child.pathCost);
-                                }
+                            //add node to queue if node has not been explored
+                            if (!closed.contains(child) && !aStarOpenQueue.contains(child)) {
+                                aStarOpenQueue.add(child);
+                                costMap.put(child.toString(), distance);
                             }
+                            //current path is shorter than previous path found
+                            else if (aStarOpenQueue.contains(child) && distance < costMap.get(child.toString())) {
+                                System.out.println("Replacing cost as better found1");
+                                aStarOpenQueue.remove(child);
+                                aStarOpenQueue.add(child);
+                                costMap.put(child.toString(), child.pathCost);
+                            } /*else if (closed.contains(child) && distance < costMap.get(child.toString())) {
+                                System.out.println("Replacing cost as better found2");
+                                closed.remove(child);
+                                aStarOpenQueue.add(child);
+                                costMap.put(child.toString(), child.pathCost);
+                            }*/
                         }
                     }
                 }
@@ -302,10 +301,10 @@ public class homework {
             FileWriter fw = new FileWriter("output.txt");
 
             for (Map.Entry<String, Node> entry : allSitesPaths.entrySet()) {
-                System.out.println("path cost " + entry.getValue().pathCost);
                 if (entry.getValue() == null || entry.getValue().parent == null) {
-                    fw.write("FAIL");
+                    fw.write("FAIL" + "\n");
                 } else {
+                    System.out.println("path cost " + entry.getValue().pathCost);
                     Node currentCoord = entry.getValue();
                     StringBuilder sbr = new StringBuilder();
                     while (currentCoord != null) {
