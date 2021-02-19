@@ -74,7 +74,7 @@ public class homework {
     public static void main(String[] args) {
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("src/work/input7.txt"));
+            scanner = new Scanner(new File("src/work/largeInput3.txt"));
             //scanner = new Scanner(new File("input.txt"));
             String typeOfAlgorithm = scanner.nextLine();
 
@@ -90,11 +90,14 @@ public class homework {
 
             int noOfSites = Integer.parseInt(scanner.nextLine());
             Map<String, Node> allDestinations = new LinkedHashMap<>();
+            //Another data structure here in case settling sites are repeated or non-unique
+            List<String> allDestinationsList = new LinkedList<>();
 
             for(int i=0; i<noOfSites; i++) {
                 String[] site = scanner.nextLine().split(" ");
                 Node siteCoord = new Node(Integer.parseInt(site[0]), Integer.parseInt(site[1]), null);
                 allDestinations.put(siteCoord.toString(), new Node(siteCoord.x, siteCoord.y, null));
+                allDestinationsList.add(siteCoord.toString());
             }
 
             for(int i=0; i<rowHeight; i++) {
@@ -106,11 +109,11 @@ public class homework {
 
             switch(typeOfAlgorithm) {
                 case BFS:
-                    solveUsingBFS(columnWidth, rowHeight, startingCoord, maxRockHeight, allDestinations, grid);
+                    solveUsingBFS(columnWidth, rowHeight, startingCoord, maxRockHeight, allDestinations, grid, allDestinationsList);
                     break;
 
                 case UCS:
-                    solveUsingUCS(columnWidth, rowHeight, startingCoord, maxRockHeight, allDestinations, grid);
+                    solveUsingUCS(columnWidth, rowHeight, startingCoord, maxRockHeight, allDestinations, grid, allDestinationsList);
                     break;
 
                 case A_STAR:
@@ -118,7 +121,7 @@ public class homework {
                         Node result = getResultUsingAStar(columnWidth, rowHeight, startingCoord, maxRockHeight, grid, entry.getValue());
                         allDestinations.put(entry.getKey(), result);
                     }
-                    addToOutputFile(allDestinations);
+                    addToOutputFile(allDestinations, allDestinationsList);
                     break;
             }
         } catch (Exception e) {
@@ -127,7 +130,7 @@ public class homework {
     }
 
     private static void solveUsingBFS(int columnWidth, int rowHeight, Node startingCoord, int maxRockHeight,
-                                      Map<String, Node> allDestinations, int[][] grid) {
+                                      Map<String, Node> allDestinations, int[][] grid, List<String> allDestinationsList) {
         Queue<Node> queue = new LinkedList<>();
         boolean visited[][] = new boolean[rowHeight][columnWidth];
         visited[startingCoord.y][startingCoord.x] = true;
@@ -138,6 +141,7 @@ public class homework {
             //System.out.println("currentCoord: " + currentCoord.toString());
 
             if (allDestinations.get(currentCoord.toString()) != null) {
+                //System.out.println("reached node " + currentCoord);
                 allDestinations.put(currentCoord.toString(), currentCoord);
             }
             List<Node> allNeighbors = getAllUnvisitedNeighboursBFS(grid, currentCoord, columnWidth, rowHeight, maxRockHeight, visited);
@@ -146,7 +150,7 @@ public class homework {
             }
             //System.out.println("queue contents: " + queue);
         }
-        addToOutputFile(allDestinations);
+        addToOutputFile(allDestinations, allDestinationsList);
     }
 
 
@@ -172,7 +176,7 @@ public class homework {
     }
 
     private static void solveUsingUCS(int columnWidth, int rowHeight, Node startingCoord, int maxRockHeight,
-                                      Map<String, Node> allSitesPaths, int[][] grid) {
+                                      Map<String, Node> allSitesPaths, int[][] grid, List<String> allDestinationsList) {
         PriorityQueue<Node> ucsOpenQueue = new PriorityQueue<>();
         Map<String, Integer> costMap = new HashMap<>();
         Set<Node> closed = new HashSet<>();
@@ -221,7 +225,7 @@ public class homework {
             }
         }
 
-        addToOutputFile(allSitesPaths);
+        addToOutputFile(allSitesPaths, allDestinationsList);
     }
 
     private static Node getResultUsingAStar(int columnWidth, int rowHeight, Node startingCoord, int maxRockHeight,
@@ -249,7 +253,7 @@ public class homework {
                     if (x != currentNode.x || y != currentNode.y) {
                         int neighbourHeight = grid[y][x] < 0 ? Math.abs(grid[y][x]) : 0;
                         if (Math.abs(currentHeight - neighbourHeight) <= maxRockHeight) {
-                            System.out.println("current node " + currentNode + " and cost " + currentNode.pathCost + " gcost "  + currentNode.gCost);
+                            // System.out.println("current node " + currentNode + " and cost " + currentNode.pathCost + " gcost "  + currentNode.gCost);
 
                             // movement cost based on diagonal or not
                             gCost = (x != currentNode.x && y != currentNode.y) ? 14 : 10;
@@ -295,17 +299,17 @@ public class homework {
         return null;
     }
 
-    private static void addToOutputFile(Map<String, Node> allSitesPaths) {
+    private static void addToOutputFile(Map<String, Node> allSitesPaths, List<String> allDestinationsList) {
 
         try {
             FileWriter fw = new FileWriter("output.txt");
 
-            for (Map.Entry<String, Node> entry : allSitesPaths.entrySet()) {
-                if (entry.getValue() == null || entry.getValue().parent == null) {
+            for (String destination: allDestinationsList) {
+                Node currentCoord = allSitesPaths.get(destination);
+                if (currentCoord == null || currentCoord.parent == null) {
                     fw.write("FAIL" + "\n");
                 } else {
-                    System.out.println("path cost " + entry.getValue().pathCost);
-                    Node currentCoord = entry.getValue();
+                    System.out.println("path cost " + currentCoord.pathCost);
                     StringBuilder sbr = new StringBuilder();
                     while (currentCoord != null) {
                         sbr.insert(0, currentCoord.x + "," + currentCoord.y + " ");
