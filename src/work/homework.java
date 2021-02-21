@@ -74,7 +74,7 @@ public class homework {
     public static void main(String[] args) {
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("src/work/largeInput3.txt"));
+            scanner = new Scanner(new File("src/work/externalInput.txt"));
             //scanner = new Scanner(new File("input.txt"));
             String typeOfAlgorithm = scanner.nextLine();
 
@@ -188,7 +188,7 @@ public class homework {
             Node currentNode = ucsOpenQueue.poll();
             closed.add(currentNode);
             if (allSitesPaths.get(currentNode.toString()) != null) {
-                System.out.println("Goal reached " + currentNode.toString());
+                //System.out.println("Goal reached " + currentNode.toString());
                 allSitesPaths.put(currentNode.toString(), currentNode);
             }
             int currentHeight = grid[currentNode.y][currentNode.x] < 0 ? Math.abs(grid[currentNode.y][currentNode.x]) : 0;
@@ -242,7 +242,7 @@ public class homework {
             Node currentNode = aStarOpenQueue.poll();
 
             if(currentNode.x == goal.x && currentNode.y == goal.y) {
-                System.out.println("Goal reached " + currentNode.toString());
+                //System.out.println("Goal reached " + currentNode.toString());
                 return currentNode;
             }
             int currentHeight = grid[currentNode.y][currentNode.x] < 0 ? Math.abs(grid[currentNode.y][currentNode.x]) : 0;
@@ -279,7 +279,7 @@ public class homework {
                             }
                             //current path is shorter than previous path found
                             else if (aStarOpenQueue.contains(child) && distance < costMap.get(child.toString())) {
-                                System.out.println("Replacing cost as better found1");
+                                //System.out.println("Replacing cost as better found1");
                                 aStarOpenQueue.remove(child);
                                 aStarOpenQueue.add(child);
                                 costMap.put(child.toString(), child.pathCost);
@@ -303,8 +303,11 @@ public class homework {
 
         try {
             FileWriter fw = new FileWriter("output.txt");
+            String addString;
 
+            int i=0;
             for (String destination: allDestinationsList) {
+                i++;
                 Node currentCoord = allSitesPaths.get(destination);
                 if (currentCoord == null || currentCoord.parent == null) {
                     fw.write("FAIL" + "\n");
@@ -315,7 +318,13 @@ public class homework {
                         sbr.insert(0, currentCoord.x + "," + currentCoord.y + " ");
                         currentCoord = currentCoord.parent;
                     }
-                    fw.write(sbr.toString() + "\n");
+                    if (i == allDestinationsList.size()) {
+                        addString = sbr.toString().trim();
+                    }
+                    else {
+                        addString = sbr.toString().trim() + "\n";
+                    }
+                    fw.write(addString);
                 }
             }
             fw.close();
